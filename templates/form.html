@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Testgen Input Form</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <div class="p-6 max-w-3xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">Testgen Input Form</h1>
+    <form method="POST" enctype="multipart/form-data">
+      <!-- Syllabus -->
+      <div class="mb-4">
+        <label class="flex items-center">
+          <input type="checkbox" name="syllabus_enable" id="syllabus_enable" class="mr-2" onchange="toggleSection('syllabus')" />
+          Include Syllabus
+        </label>
+        <div id="syllabus" class="hidden ml-6 mt-2">
+          <label class="mr-4"><input type="radio" name="syllabus_type" value="pdf" onclick="toggleInput('syllabus','pdf')" /> PDF</label>
+          <label><input type="radio" name="syllabus_type" value="text" onclick="toggleInput('syllabus','text')" /> Text</label>
+          <div id="syllabus_pdf_input" class="hidden mt-2"><input type="file" name="syllabus_pdf" accept="application/pdf" /></div>
+          <div id="syllabus_text_input" class="hidden mt-2"><textarea name="syllabus_text" rows="4" class="w-full p-2 border rounded" placeholder="Paste syllabus text..."></textarea></div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="mb-4">
+        <label class="flex items-center">
+          <input type="checkbox" name="notes_enable" id="notes_enable" class="mr-2" onchange="toggleSection('notes')" />
+          Include Notes
+        </label>
+        <div id="notes" class="hidden ml-6 mt-2">
+          <label class="mr-4"><input type="radio" name="notes_type" value="pdf" onclick="toggleInput('notes','pdf')" /> PDF</label>
+          <label><input type="radio" name="notes_type" value="text" onclick="toggleInput('notes','text')" /> Text</label>
+          <div id="notes_pdf_input" class="hidden mt-2"><input type="file" name="notes_pdf" accept="application/pdf" /></div>
+          <div id="notes_text_input" class="hidden mt-2"><textarea name="notes_text" rows="4" class="w-full p-2 border rounded" placeholder="Paste notes text..."></textarea></div>
+        </div>
+      </div>
+
+      <!-- PYQs -->
+      <div class="mb-4">
+        <label class="flex items-center">
+          <input type="checkbox" name="pyqs_enable" id="pyqs_enable" class="mr-2" onchange="toggleSection('pyqs')" />
+          Include PYQs
+        </label>
+        <div id="pyqs" class="hidden ml-6 mt-2">
+          <label class="mr-4"><input type="radio" name="pyqs_type" value="pdf" onclick="toggleInput('pyqs','pdf')" /> PDF</label>
+          <label><input type="radio" name="pyqs_type" value="text" onclick="toggleInput('pyqs','text')" /> Text</label>
+          <div id="pyqs_pdf_input" class="hidden mt-2"><input type="file" name="pyqs_pdf" accept="application/pdf" /></div>
+          <div id="pyqs_text_input" class="hidden mt-2"><textarea name="pyqs_text" rows="4" class="w-full p-2 border rounded" placeholder="Paste PYQs text..."></textarea></div>
+        </div>
+      </div>
+
+      <!-- Weightage Tags -->
+      <div class="mb-4">
+        <p class="font-medium">Select Weightage Tags:</p>
+        <div class="flex flex-wrap mt-2">
+          {% for tag in ['100% PYQ','40% New Questions','Focus on ML','High Difficulty'] %}
+            <label class="m-1 px-3 py-1 border rounded-full bg-gray-100 cursor-pointer">
+              <input type="checkbox" name="weightage_tags" value="{{ tag }}" class="mr-1" />{{ tag }}
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Paper Pattern -->
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Number of Sections:</label>
+        <input type="number" id="sections_count" name="sections_count" min="0" class="w-20 p-1 border rounded" onchange="renderSections()" />
+        <div id="sections_container"></div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex space-x-4">
+        <button type="submit" class="px-4 py-2 bg-indigo-500 text-white rounded">Generate</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    function toggleSection(id) {
+      const sec = document.getElementById(id);
+      sec.classList.toggle('hidden');
+    }
+    function toggleInput(section, type) {
+      ['pdf','text'].forEach(t => {
+        document.getElementById(`${section}_${t}_input`).classList.toggle('hidden', t !== type);
+      });
+    }
+    function renderSections() {
+      const count = parseInt(document.getElementById('sections_count').value) || 0;
+      const container = document.getElementById('sections_container');
+      container.innerHTML = '';
+      for (let i = 1; i <= count; i++) {
+        container.innerHTML += `
+          <div class="border p-4 rounded mt-3">
+            <p class="font-semibold">Section ${i}</p>
+            <input type="text" name="section_${i}_type" placeholder="Question Type" class="w-full mt-2 p-1 border rounded" />
+            <div class="flex mt-2 space-x-2">
+              <input type="number" name="section_${i}_count" placeholder="No. of Questions" class="w-1/2 p-1 border rounded" />
+              <input type="number" name="section_${i}_marks" placeholder="Marks per Question" class="w-1/2 p-1 border rounded" />
+            </div>
+          </div>`;
+      }
+    }
+  </script>
+</body>
+</html>
