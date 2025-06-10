@@ -1,0 +1,3 @@
+->This is a AI question paper generator and evaluation tool for students which generates a personalized question paper according to students needs and evaluates their answers. 
+-> after evaluation it provides lacking areas of stuents, where students shoud focus and some suggestions for improvements
+-> it also provides resources like notes, cours elinks or youtube links for the topic where student lacked
