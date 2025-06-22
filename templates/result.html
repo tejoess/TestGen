@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated Question Paper - TestGen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">Generated Question Paper</h1>
+                <div class="flex space-x-2">
+                    <button id="solvePaperBtn" onclick="toggleAnswerMode()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        Solve Question Paper
+                    </button>
+                    <a href="/" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        Start New Session
+                    </a>
+                </div>
+            </div>
+
+            {% if question_paper.error %}
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                    <strong>Error:</strong> {{ question_paper.error }}
+                </div>
+            {% else %}
+                <!-- Question Paper Display -->
+                <div class="space-y-6">
+                    {% for section_name, section_data in question_paper.items() %}
+                        <div class="border border-gray-200 rounded-lg p-6">
+                            <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">
+                                {{ section_name }}
+                            </h2>
+                            
+                            {% if section_data.questions %}
+                                <div class="space-y-4">
+                                    {% for question in section_data.questions %}
+                                        <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-500">
+                                            <div class="flex justify-between items-start mb-2">
+                                                <span class="font-semibold text-gray-700">Q{{ question.question_no }}.</span>
+                                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">
+                                                    {{ question.marks }} marks
+                                                </span>
+                                            </div>
+                                            <p class="text-gray-800 leading-relaxed mb-3">{{ question.question }}</p>
+                                            
+                                            <!-- Answer Field (Hidden by default) -->
+                                            <div class="answer-field hidden">
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                                    Your Answer:
+                                                </label>
+                                                <textarea 
+                                                    name="answer_{{ section_name }}_{{ question.question_no }}" 
+                                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    rows="4"
+                                                    placeholder="Write your answer here..."
+                                                ></textarea>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-gray-500 italic">No questions generated for this section.</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Submit Answers Button (Hidden by default) -->
+                <div id="submitAnswersDiv" class="hidden mt-6 text-center">
+                    <button onclick="submitAnswers()" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition-colors">
+                        Submit Answers
+                    </button>
+                </div>
+
+                <!-- Input Summary -->
+                <div class="mt-8 bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Input Summary</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% if input_data.sections %}
+                            <div>
+                                <h4 class="font-medium text-gray-700 mb-2">Paper Pattern:</h4>
+                                <ul class="space-y-1">
+                                    {% for section in input_data.sections %}
+                                        <li class="text-sm text-gray-600">
+                                            Section {{ loop.index }}: {{ section.count }} questions of {{ section.marks }} marks each ({{ section.type }})
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                        
+                        {% if input_data.weightage_tags %}
+                            <div>
+                                <h4 class="font-medium text-gray-700 mb-2">Selected Weightage Tags:</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    {% for tag in input_data.weightage_tags %}
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">{{ tag }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Raw JSON Data (for debugging) -->
+            <div class="mt-8">
+                <details class="bg-gray-100 rounded-lg p-4">
+                    <summary class="cursor-pointer font-medium text-gray-700 mb-2">View Raw Data (JSON)</summary>
+                    <pre class="bg-white p-4 rounded border text-sm overflow-x-auto">{{ question_paper | tojson(indent=2) }}</pre>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isAnswerMode = false;
+
+        function toggleAnswerMode() {
+            isAnswerMode = !isAnswerMode;
+            const answerFields = document.querySelectorAll('.answer-field');
+            const submitDiv = document.getElementById('submitAnswersDiv');
+            const solveBtn = document.getElementById('solvePaperBtn');
+            
+            if (isAnswerMode) {
+                // Show answer fields
+                answerFields.forEach(field => field.classList.remove('hidden'));
+                submitDiv.classList.remove('hidden');
+                solveBtn.textContent = 'Hide Answer Fields';
+                solveBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                solveBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+            } else {
+                // Hide answer fields
+                answerFields.forEach(field => field.classList.add('hidden'));
+                submitDiv.classList.add('hidden');
+                solveBtn.textContent = 'Solve Question Paper';
+                solveBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                solveBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            }
+        }
+
+        function submitAnswers() {
+            const answers = {};
+            
+            // Collect all answers
+            const answerFields = document.querySelectorAll('textarea[name^="answer_"]');
+            console.log('DEBUG: Found answer fields:', answerFields.length);
+            
+            answerFields.forEach(field => {
+                const name = field.name;
+                const answer = field.value.trim();
+                console.log('DEBUG: Field name:', name, 'Answer:', answer);
+                
+                // Parse the field name to get section and question info
+                // Field name format: answer_Section 1_1 -> Section 1, question 1
+                const withoutPrefix = name.replace('answer_', '');
+                console.log('DEBUG: Without prefix:', withoutPrefix);
+                
+                // Find the last underscore to separate section name from question number
+                const lastUnderscoreIndex = withoutPrefix.lastIndexOf('_');
+                if (lastUnderscoreIndex === -1) {
+                    console.error('DEBUG: No underscore found in field name');
+                    return;
+                }
+                
+                const sectionName = withoutPrefix.substring(0, lastUnderscoreIndex);
+                const questionNo = parseInt(withoutPrefix.substring(lastUnderscoreIndex + 1));
+                
+                console.log('DEBUG: Parsed - Section:', sectionName, 'Question:', questionNo);
+                
+                if (!answers[sectionName]) {
+                    answers[sectionName] = {};
+                }
+                
+                answers[sectionName][questionNo] = {
+                    answer: answer,
+                    question_no: questionNo
+                };
+            });
+            
+            console.log('DEBUG: Collected answers:', answers);
+            
+            // Send answers to server
+            fetch('/submit_answers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    answers: answers,
+                    question_paper: JSON.parse('{{ question_paper | tojson | safe }}')
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('DEBUG: Server response:', data);
+                if (data.success) {
+                    alert('Answers submitted successfully! Redirecting to evaluation report...');
+                    console.log('Answersheet:', data.answersheet);
+                    
+                    // Redirect to report page if specified
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    }
+                } else {
+                    alert('Error submitting answers: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('DEBUG: Fetch error:', error);
+                alert('Error submitting answers: ' + error.message);
+            });
+        }
+
+        // Add print functionality
+        function printQuestionPaper() {
+            window.print();
+        }
+    </script>
+</body>
+</html> 

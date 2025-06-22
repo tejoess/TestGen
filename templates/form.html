@@ -7,130 +7,259 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50">
-  <div class="p-6 max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold mb-4">Testgen Input Form</h1>
-
-    <form method="POST" enctype="multipart/form-data">
-      {% for input_type in ['syllabus', 'notes', 'pyqs'] %}
-      <div class="mb-6 border-b pb-4">
-        <label class="flex items-center mb-2">
-          <input type="checkbox" name="{{ input_type }}_enable" id="{{ input_type }}_enable"
-                 class="mr-2" onchange="toggleSection('{{ input_type }}')" />
-          Include {{ input_type.capitalize() }}
+  <div class="p-6 max-w-3xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">Testgen Input Form</h1>
+    <form method="POST" enctype="multipart/form-data" id="mainForm">
+      <!-- Syllabus -->
+      <div class="mb-4">
+        <label class="flex items-center">
+          <input type="checkbox" name="syllabus_enable" id="syllabus_enable" class="mr-2" onchange="toggleSection('syllabus')" />
+          Include Syllabus
         </label>
-        <div id="{{ input_type }}" class="hidden ml-4">
-          <label class="mr-4">
-            <input type="radio" name="{{ input_type }}_type" value="pdf"
-                   onclick="toggleInput('{{ input_type }}','pdf')" />
-            PDF
-          </label>
-          <label>
-            <input type="radio" name="{{ input_type }}_type" value="text"
-                   onclick="toggleInput('{{ input_type }}','text')" />
-            Text
-          </label>
-          <div id="{{ input_type }}_pdf_input" class="hidden mt-2">
-            <input type="file" name="{{ input_type }}_pdf" accept="application/pdf" />
+        <div id="syllabus" class="hidden ml-6 mt-2">
+          <label class="mr-4"><input type="radio" name="syllabus_type" value="pdf" onclick="toggleInput('syllabus','pdf')" /> PDF</label>
+          <label><input type="radio" name="syllabus_type" value="text" onclick="toggleInput('syllabus','text')" /> Text</label>
+          <div id="syllabus_pdf_input" class="hidden mt-2">
+            <input type="file" name="syllabus_pdf" accept="application/pdf" onchange="handlePdfUpload(this, 'syllabus')" />
+            <div id="syllabus_loading" class="hidden mt-2 text-blue-600">Processing PDF...</div>
+            <div id="syllabus_key_points" class="mt-2"></div>
           </div>
-          <div id="{{ input_type }}_text_input" class="hidden mt-2">
-            <textarea name="{{ input_type }}_text" rows="4"
-                      class="w-full p-2 border rounded"
-                      placeholder="Paste {{ input_type }} text..."
-                      onblur="fetchKeyTerms(this.value, '{{ input_type }}')"></textarea>
+          <div id="syllabus_text_input" class="hidden mt-2">
+            <textarea name="syllabus_text" rows="4" class="w-full p-2 border rounded" placeholder="Paste syllabus text..."></textarea>
+            <button type="button" onclick="generateKeyPointsFromText('syllabus')" class="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-sm">Generate Key Points</button>
+            <div id="syllabus_text_key_points" class="mt-2"></div>
           </div>
-          <div id="{{ input_type }}_key_terms" class="mt-2 text-sm text-indigo-700"></div>
         </div>
       </div>
-      {% endfor %}
+
+      <!-- Notes -->
+      <div class="mb-4">
+        <label class="flex items-center">
+          <input type="checkbox" name="notes_enable" id="notes_enable" class="mr-2" onchange="toggleSection('notes')" />
+          Include Notes
+        </label>
+        <div id="notes" class="hidden ml-6 mt-2">
+          <label class="mr-4"><input type="radio" name="notes_type" value="pdf" onclick="toggleInput('notes','pdf')" /> PDF</label>
+          <label><input type="radio" name="notes_type" value="text" onclick="toggleInput('notes','text')" /> Text</label>
+          <div id="notes_pdf_input" class="hidden mt-2">
+            <input type="file" name="notes_pdf" accept="application/pdf" onchange="handlePdfUpload(this, 'notes')" />
+            <div id="notes_loading" class="hidden mt-2 text-blue-600">Processing PDF...</div>
+            <div id="notes_key_points" class="mt-2"></div>
+          </div>
+          <div id="notes_text_input" class="hidden mt-2">
+            <textarea name="notes_text" rows="4" class="w-full p-2 border rounded" placeholder="Paste notes text..."></textarea>
+            <button type="button" onclick="generateKeyPointsFromText('notes')" class="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-sm">Generate Key Points</button>
+            <div id="notes_text_key_points" class="mt-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PYQs -->
+      <div class="mb-4">
+        <label class="flex items-center">
+          <input type="checkbox" name="pyqs_enable" id="pyqs_enable" class="mr-2" onchange="toggleSection('pyqs')" />
+          Include PYQs
+        </label>
+        <div id="pyqs" class="hidden ml-6 mt-2">
+          <label class="mr-4"><input type="radio" name="pyqs_type" value="pdf" onclick="toggleInput('pyqs','pdf')" /> PDF</label>
+          <label><input type="radio" name="pyqs_type" value="text" onclick="toggleInput('pyqs','text')" /> Text</label>
+          <div id="pyqs_pdf_input" class="hidden mt-2">
+            <input type="file" name="pyqs_pdf" accept="application/pdf" onchange="handlePdfUpload(this, 'pyqs')" />
+            <div id="pyqs_loading" class="hidden mt-2 text-blue-600">Processing PDF...</div>
+            <div id="pyqs_key_points" class="mt-2"></div>
+          </div>
+          <div id="pyqs_text_input" class="hidden mt-2">
+            <textarea name="pyqs_text" rows="4" class="w-full p-2 border rounded" placeholder="Paste PYQs text..."></textarea>
+            <button type="button" onclick="generateKeyPointsFromText('pyqs')" class="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-sm">Generate Key Points</button>
+            <div id="pyqs_text_key_points" class="mt-2"></div>
+          </div>
+        </div>
+      </div>
 
       <!-- Weightage Tags -->
-      <div class="mb-6">
-        <p class="font-semibold mb-2">Select Weightage Tags from Key Terms:</p>
-        {% if weightage_tags_list %}
-        <div class="flex flex-wrap">
+      <div class="mb-4">
+        <p class="font-medium">Select Weightage Tags:</p>
+        <div class="flex flex-wrap mt-2" id="weightage_tags_container">
           {% for tag in weightage_tags_list %}
             <label class="m-1 px-3 py-1 border rounded-full bg-gray-100 cursor-pointer">
-              <input type="checkbox" name="weightage_tags" value="{{ tag }}" class="mr-1" />
-              {{ tag }}
+              <input type="checkbox" name="weightage_tags" value="{{ tag }}" class="mr-1" />{{ tag }}
             </label>
           {% endfor %}
         </div>
-        {% else %}
-          <p class="text-sm text-gray-500">Upload content to generate key terms first.</p>
-        {% endif %}
+        <button type="button" onclick="generateWeightageFromAllInputs()" class="mt-2 px-4 py-2 bg-green-500 text-white rounded">Generate Weightage from All Inputs</button>
       </div>
 
-      <!-- Sections -->
-      <div class="mb-6">
-        <label class="block font-semibold mb-2">Number of Sections:</label>
-        <input type="number" id="sections_count" name="sections_count" min="0"
-               class="w-20 p-2 border rounded" onchange="renderSections()" />
-        <div id="sections_container" class="mt-4"></div>
+      <!-- Paper Pattern -->
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Number of Sections:</label>
+        <input type="number" id="sections_count" name="sections_count" min="0" class="w-20 p-1 border rounded" onchange="renderSections()" />
+        <div id="sections_container"></div>
       </div>
 
-      <!-- Submit Button -->
-      <div class="mt-6">
-        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded">
-          Generate
-        </button>
+      <!-- Buttons -->
+      <div class="flex space-x-4">
+        <button type="submit" class="px-4 py-2 bg-indigo-500 text-white rounded">Generate</button>
       </div>
     </form>
   </div>
 
   <script>
     function toggleSection(id) {
-      document.getElementById(id).classList.toggle('hidden');
+      const sec = document.getElementById(id);
+      sec.classList.toggle('hidden');
     }
-
+    
     function toggleInput(section, type) {
-      ['pdf', 'text'].forEach(t => {
+      ['pdf','text'].forEach(t => {
         document.getElementById(`${section}_${t}_input`).classList.toggle('hidden', t !== type);
       });
     }
-
+    
     function renderSections() {
       const count = parseInt(document.getElementById('sections_count').value) || 0;
       const container = document.getElementById('sections_container');
       container.innerHTML = '';
       for (let i = 1; i <= count; i++) {
         container.innerHTML += `
-          <div class="border p-4 rounded mt-3 bg-white shadow-sm">
+          <div class="border p-4 rounded mt-3">
             <p class="font-semibold">Section ${i}</p>
-            <input type="text" name="section_${i}_type" placeholder="Question Type"
-                   class="w-full mt-2 p-2 border rounded" />
+            <input type="text" name="section_${i}_type" placeholder="Question Type" class="w-full mt-2 p-1 border rounded" />
             <div class="flex mt-2 space-x-2">
-              <input type="number" name="section_${i}_count" placeholder="No. of Questions"
-                     class="w-1/2 p-2 border rounded" />
-              <input type="number" name="section_${i}_marks" placeholder="Marks per Question"
-                     class="w-1/2 p-2 border rounded" />
+              <input type="number" name="section_${i}_count" placeholder="No. of Questions" class="w-1/2 p-1 border rounded" />
+              <input type="number" name="section_${i}_marks" placeholder="Marks per Question" class="w-1/2 p-1 border rounded" />
             </div>
           </div>`;
       }
     }
-
-    function fetchKeyTerms(text, section) {
-      if (!text.trim()) return;
+    
+    function handlePdfUpload(input, inputType) {
+      const file = input.files[0];
+      if (!file) return;
+      
+      const loadingDiv = document.getElementById(`${inputType}_loading`);
+      const keyPointsDiv = document.getElementById(`${inputType}_key_points`);
+      
+      loadingDiv.classList.remove('hidden');
+      keyPointsDiv.innerHTML = '';
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('input_type', inputType);
+      
+      fetch('/upload_pdf', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        loadingDiv.classList.add('hidden');
+        if (data.status === 'success') {
+          displayKeyPoints(keyPointsDiv, data.key_points, inputType);
+          addToWeightageTags(data.key_points);
+        } else {
+          keyPointsDiv.innerHTML = `<p class="text-red-600">Error: ${data.error}</p>`;
+        }
+      })
+      .catch(error => {
+        loadingDiv.classList.add('hidden');
+        keyPointsDiv.innerHTML = `<p class="text-red-600">Error: ${error.message}</p>`;
+      });
+    }
+    
+    function generateKeyPointsFromText(inputType) {
+      const textarea = document.querySelector(`textarea[name="${inputType}_text"]`);
+      const text = textarea.value.trim();
+      
+      if (!text) {
+        alert('Please enter some text first.');
+        return;
+      }
+      
+      const keyPointsDiv = document.getElementById(`${inputType}_text_key_points`);
+      keyPointsDiv.innerHTML = '<p class="text-blue-600">Generating key points...</p>';
+      
       const formData = new FormData();
       formData.append('text', text);
-
+      formData.append('input_type', inputType);
+      
       fetch('/extract_key_terms', {
         method: 'POST',
         body: formData
       })
-      .then(res => res.json())
+      .then(response => response.json())
       .then(data => {
-        const display = document.getElementById(`${section}_key_terms`);
         if (data.key_terms) {
-          display.innerHTML = '<p class="font-semibold">Extracted Key Terms:</p>' +
-            data.key_terms.map(term =>
-              `<span class="bg-indigo-100 rounded-full px-2 py-1 mr-2 mb-2 inline-block">${term}</span>`
-            ).join('');
+          displayKeyPoints(keyPointsDiv, data.key_terms, inputType);
+          addToWeightageTags(data.key_terms);
         } else {
-          display.innerHTML = '<p class="text-red-600">Error fetching key terms.</p>';
+          keyPointsDiv.innerHTML = `<p class="text-red-600">Error: ${data.error}</p>`;
         }
       })
-      .catch(() => {
-        document.getElementById(`${section}_key_terms`).innerHTML = '<p class="text-red-600">Fetch failed.</p>';
+      .catch(error => {
+        keyPointsDiv.innerHTML = `<p class="text-red-600">Error: ${error.message}</p>`;
+      });
+    }
+    
+    function displayKeyPoints(container, keyPoints, inputType) {
+      container.innerHTML = `
+        <div class="mt-2 p-2 bg-blue-50 rounded">
+          <p class="font-medium text-sm">Generated Key Points for ${inputType}:</p>
+          <div class="flex flex-wrap mt-1">
+            ${keyPoints.map(point => `<span class="m-1 px-2 py-1 bg-blue-200 rounded text-sm">${point}</span>`).join('')}
+          </div>
+        </div>
+      `;
+    }
+    
+    function addToWeightageTags(keyPoints) {
+      const container = document.getElementById('weightage_tags_container');
+      keyPoints.forEach(point => {
+        // Check if tag already exists
+        const existingTag = container.querySelector(`input[value="${point}"]`);
+        if (!existingTag) {
+          const label = document.createElement('label');
+          label.className = 'm-1 px-3 py-1 border rounded-full bg-gray-100 cursor-pointer';
+          label.innerHTML = `<input type="checkbox" name="weightage_tags" value="${point}" class="mr-1" />${point}`;
+          container.appendChild(label);
+        }
+      });
+    }
+    
+    function generateWeightageFromAllInputs() {
+      const allTexts = [];
+      
+      // Collect all text inputs
+      ['syllabus', 'notes', 'pyqs'].forEach(inputType => {
+        const textarea = document.querySelector(`textarea[name="${inputType}_text"]`);
+        if (textarea && textarea.value.trim()) {
+          allTexts.push(textarea.value.trim());
+        }
+      });
+      
+      if (allTexts.length === 0) {
+        alert('Please add some text content first.');
+        return;
+      }
+      
+      const combinedText = allTexts.join('\n\n');
+      const formData = new FormData();
+      formData.append('text', combinedText);
+      
+      fetch('/extract_key_terms', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.key_terms) {
+          addToWeightageTags(data.key_terms);
+          alert('Weightage tags generated from all inputs!');
+        } else {
+          alert(`Error: ${data.error}`);
+        }
+      })
+      .catch(error => {
+        alert(`Error: ${error.message}`);
       });
     }
   </script>
