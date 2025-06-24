@@ -13,9 +13,10 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import json
 import traceback
+import requests
 
 load_dotenv(find_dotenv(), override=True)
-
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'testgen-secret-key-2024'
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -28,6 +29,40 @@ app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 llm = ChatGoogleGenerativeAI(model='gemini-1.5-flash', temperature=0.0)
+
+def search_youtube_videos(query, max_results=2):
+    url = "https://www.googleapis.com/youtube/v3/search"
+    params = {
+        "part": "snippet",
+        "q": query,
+        "type": "video",
+        "maxResults": max_results,
+        "key": YOUTUBE_API_KEY
+    }
+
+    response = requests.get(url, params=params)
+    data = response.json()
+    
+    if 'items' not in data:
+        print(f"❌ Error fetching YouTube data for '{query}': {data}")
+        return []
+
+    videos = []
+    for item in data['items']:
+        video_id = item['id']['videoId']
+        title = item['snippet']['title']
+        thumbnail = item['snippet']['thumbnails']['high']['url']
+        videos.append({
+            "title": title,
+            "url": f"https://www.youtube.com/watch?v={video_id}",
+            "thumbnail": thumbnail
+        })
+
+    return videos
+
+
+
+
 
 #--------------------------------INPUTS--------------------------------
 def extract_text_from_pdf(pdf_path):
@@ -447,7 +482,20 @@ def report():
     if not eval_report or not answersheet:
         return redirect('/')
     
-    return render_template('report.html', eval_report=eval_report, answersheet=answersheet)
+        # Get recommended YouTube videos based on weak topics
+    youtube_recommendations = {}
+    weak_topics = eval_report.get("weak_topics", []) if eval_report else []
+
+    for topic in weak_topics:
+        youtube_recommendations[topic] = search_youtube_videos(topic, max_results=2)
+
+    return render_template(
+        'report.html',
+        eval_report=eval_report,
+        answersheet=answersheet,
+        youtube_recommendations=youtube_recommendations
+    )
+
 
 
 #--------------------------------EVALUATION--------------------------------
@@ -541,6 +589,10 @@ def enrich_answersheet_with_context(answersheet, document_chunks, top_k=4):
         print(f"DEBUG: Error in enrich_answersheet_with_context: {str(e)}")
         traceback.print_exc()
         raise e
+
+
+#--------------------------------Recommendation Content--------------------------------
+
 
 if __name__ == '__main__':
     app.secret_key = 'testgen-secret-key-2024'  # Required for session
